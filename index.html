@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poster URL Builder</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f3;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus {
+      border-color: #888;
+    }
+
+    .result-box {
+      display: none;
+      margin-top: 1.25rem;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      margin-bottom: 0.5rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e0e0d8;
+      margin: 1.5rem 0;
+    }
+
+    .url-display {
+      background: #f5f5f3;
+      border: 1px solid #e0e0d8;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      word-break: break-all;
+      color: #1a1a1a;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+    }
+
+    button {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #f0f0ee; }
+    button:active { transform: scale(0.98); }
+
+    .preview-img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #e0e0d8;
+      display: none;
+    }
+
+    .err {
+      display: none;
+      font-size: 13px;
+      color: #c0392b;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Poster URL Builder</h1>
+    <p class="subtitle">Paste the ID to generate the full poster image URLs.</p>
+
+    <label for="idInput">Poster ID (e.g. CT0000557980)</label>
+    <input type="text" id="idInput" placeholder="CT0000557980" oninput="buildUrl()" />
+
+    <div class="result-box" id="resultBox">
+
+      <!-- Section 1: Poster -->
+      <div style="margin-top: 1.25rem;">
+        <div class="section-label">Poster Image</div>
+        <div class="url-display" id="urlText1"></div>
+        <div class="btn-row">
+          <button onclick="copyUrl(1)" id="copyBtn1">
+            <i class="ti ti-copy"></i> Copy URL
+          </button>
+          <button onclick="openUrl(1)">
+            <i class="ti ti-external-link"></i> Open image
+          </button>
+        </div>
+        <img id="preview1" class="preview-img" alt="Poster preview"
+          onload="this.style.display='block'; document.getElementById('errMsg1').style.display='none';"
+          onerror="this.style.display='none'; document.getElementById('errMsg1').style.display='block';" />
+        <p class="err" id="errMsg1">Could not load preview — check the ID or image access.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Section 2: Still -->
+      <div>
+        <div class="section-label">Still Image</div>
+        <div class="url-display" id="urlText2"></div>
+        <div class="btn-row">
+          <button onclick="copyUrl(2)" id="copyBtn2">
+            <i class="ti ti-copy"></i> Copy URL
+          </button>
+          <button onclick="openUrl(2)">
+            <i class="ti ti-external-link"></i> Open image
+          </button>
+        </div>
+        <img id="preview2" class="preview-img" alt="Still preview"
+          onload="this.style.display='block'; document.getElementById('errMsg2').style.display='none';"
+          onerror="this.style.display='none'; document.getElementById('errMsg2').style.display='block';" />
+        <p class="err" id="errMsg2">Could not load preview — check the ID or image access.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const urls = {};
+
+    function buildUrl() {
+      const id = document.getElementById('idInput').value.trim();
+      const box = document.getElementById('resultBox');
+      if (!id) { box.style.display = 'none'; return; }
+
+      urls[1] = `https://poster.starhubgo.com/poster/GLOBAL_${id}/GLOBAL_${id}_2.jpg`;
+      urls[2] = `https://imageservice.starhub.otvse.com//images/v1/image/Movie/GLOBAL_${id}/Still?width=352&aspect=16x9`;
+
+      document.getElementById('urlText1').textContent = urls[1];
+      document.getElementById('urlText2').textContent = urls[2];
+
+      ['preview1','preview2','errMsg1','errMsg2'].forEach(id => {
+        const el = document.getElementById(id);
+        el.style.display = 'none';
+      });
+
+      document.getElementById('preview1').src = urls[1];
+      document.getElementById('preview2').src = urls[2];
+
+      box.style.display = 'block';
+    }
+
+    function copyUrl(n) {
+      navigator.clipboard.writeText(urls[n]).then(() => {
+        const btn = document.getElementById(`copyBtn${n}`);
+        btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+        setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Copy URL', 2000);
+      });
+    }
+
+    function openUrl(n) {
+      window.open(urls[n], '_blank');
+    }
+  </script>
+</body>
+</html>
